@@ -1,0 +1,60 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id         String            @id @default(uuid())
+  name       String
+  properties ProductProperty[]
+  variations Variation[]
+
+  @@map("products")
+}
+
+model ProductProperty {
+  id       Int                    @id @default(autoincrement())
+  name     String
+  values   ProductPropertyValue[]
+  products Product[]
+
+  @@map("product_properties")
+}
+
+model ProductPropertyValue {
+  id                Int               @id @default(autoincrement())
+  productPropertyId Int               @map("product_property_id")
+  productProperty   ProductProperty   @relation(fields: [productPropertyId], references: [id], onDelete: Cascade)
+  value             String
+  meta              String?
+  vv                VariationValues[]
+
+  @@unique([productPropertyId, value])
+  @@map("product_property_values")
+}
+
+model Variation {
+  id        Int               @id @default(autoincrement())
+  productId String            @map("product_id")
+  product   Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  values    VariationValues[]
+
+  @@map("variations")
+}
+
+model VariationValues {
+  variationId            Int                  @map("variation_id")
+  variation              Variation            @relation(fields: [variationId], references: [id], onDelete: Cascade)
+  productPropertyValueId Int                  @map("product_property_value_id")
+  productPropertyValue   ProductPropertyValue @relation(fields: [productPropertyValueId], references: [id], onDelete: Cascade)
+
+  @@id([variationId, productPropertyValueId])
+  @@map("variation_values")
+}
